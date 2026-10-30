@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Match Planner | Story Learning &amp; Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:#EAF4FB;font-family:'Barlow',system-ui,sans-serif;color:#333}
+button,select,textarea,input{font-family:inherit}
+:focus-visible{outline:3px solid #009FA0;outline-offset:2px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;gap:12px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:16px}
+.divider{width:1px;height:28px;background:#c8d8e8}
+.tag{font-size:12px;font-weight:600;color:#8fa0b0;letter-spacing:.2em;text-transform:uppercase}
+.logo svg{height:36px;width:auto;display:block}
+.container{max-width:1180px;margin:0 auto;padding:8px 32px 64px}
+.title{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:800;color:#004B86;letter-spacing:-.02em;line-height:1.1;margin-top:12px}
+.subtitle{color:#5d6b78;font-size:15.5px;line-height:1.65;margin-top:8px;max-width:820px}
+.panel{background:white;border-radius:24px;padding:26px 28px;margin-top:20px;box-shadow:0 6px 24px rgba(0,97,173,.06)}
+.panel h2{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#1A3A5C;margin-bottom:6px}
+.panel > p{color:#5d6b78;font-size:14.5px;line-height:1.6}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:white;color:#0061AD;border:1.5px solid #d1e3f3;border-radius:22px;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer}
+.btn:hover{background:#f0f7fd;border-color:#0061AD}
+.btn.primary{background:#0061AD;color:white;border-color:#0061AD}
+.btn.primary:hover{background:#004B86}
+.btn.small{padding:6px 12px;font-size:12.5px}
+textarea{width:100%;min-height:110px;border:1.5px solid #d1e3f3;border-radius:14px;padding:12px 14px;font-size:13.5px;font-family:Consolas,monospace;margin-top:12px;resize:vertical}
+.privacy{background:#eef6fc;border-radius:14px;padding:12px 16px;font-size:13.5px;color:#36506a;margin-top:14px;line-height:1.55}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+.stat{background:white;border-radius:20px;padding:18px 20px;box-shadow:0 6px 24px rgba(0,97,173,.06)}
+.stat .n{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color:#004B86;line-height:1}
+.stat .l{font-size:13px;color:#6b7c8c;margin-top:4px;font-weight:600}
+.warn{background:#fff8e8;border-left:5px solid #e8a00e;border-radius:0 14px 14px 0;padding:12px 16px;margin-top:14px;font-size:13.5px;color:#5a4a20;line-height:1.55}
+.weights{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:14px}
+.weights label{font-weight:700;color:#1A3A5C;font-size:14px;display:flex;justify-content:space-between}
+.weights input{width:100%;accent-color:#0061AD;margin-top:8px}
+.weights small{display:block;color:#6b7c8c;font-weight:400;font-size:12.5px;margin-top:2px}
+.tabs{display:flex;gap:8px;margin-top:22px}
+.tab{border:none;background:#dce8f3;color:#36506a;border-radius:20px;padding:9px 18px;font-weight:700;font-size:14px;cursor:pointer}
+.tab[aria-selected="true"]{background:#0061AD;color:white}
+.seeker{background:white;border-radius:22px;padding:22px 24px;margin-top:14px;box-shadow:0 6px 24px rgba(0,97,173,.06)}
+.seeker-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.seeker-head > div:first-child{flex:1;min-width:0}@media (max-width:640px){.seeker-head{flex-wrap:wrap}}
+.who{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#1A3A5C}
+.meta{font-size:13px;color:#6b7c8c;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#eef6fc;color:#004B86;border-radius:16px;padding:4px 11px;font-size:12.5px;font-weight:600}
+.chip.teal{background:#e2f5f5;color:#00706f}
+.chip.amber{background:#fdf1d8;color:#8a5c00}
+.chip.grey{background:#eef0f2;color:#60666d}
+.assign{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:260px}
+.assign select{border:1.5px solid #d1e3f3;border-radius:12px;padding:8px 10px;font-size:14px;max-width:340px;color:#1A3A5C;font-weight:600}
+.cands{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.cand{border:2px solid #e3edf6;border-radius:16px;padding:14px 16px;position:relative}
+.cand.chosen{border-color:#0061AD;background:#f5f9fd}
+.cand.full{opacity:.65}
+.cand-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cand-name{font-weight:700;color:#1A3A5C;font-size:15px}
+.score{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#0061AD}
+.bars{margin-top:8px;display:grid;gap:5px}
+.bar{display:grid;grid-template-columns:62px 1fr 30px;gap:8px;align-items:center;font-size:11.5px;color:#6b7c8c;font-weight:600}
+.track{height:6px;border-radius:6px;background:#e8eff6;overflow:hidden}
+.fill{height:100%;border-radius:6px}
+.reasons{margin-top:10px;padding-left:16px;font-size:12.5px;color:#4a5866;line-height:1.5}
+.reasons li.flag{color:#8a5c00}
+.reasons li.lm{color:#a3271a;font-weight:700}
+.cand.lm{border-color:#f3b8b0;background:#fff6f5}
+.lm-panel{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:14px;color:#36506a;font-weight:600}
+.lm-panel select{border:1.5px solid #d1e3f3;border-radius:12px;padding:7px 10px;font-weight:600;color:#1A3A5C}
+.alert{background:#fde4e1;border-left:5px solid #a3271a;border-radius:0 14px 14px 0;padding:12px 16px;margin-top:14px;font-size:13.5px;color:#6b1a10;line-height:1.55}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+th{text-align:left;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7d8e9e;padding:10px;border-bottom:2px solid #e3edf6}
+td{padding:10px;border-bottom:1px solid #eef3f8;vertical-align:top}
+.cap{display:inline-block;min-width:44px;text-align:center;border-radius:12px;padding:3px 8px;font-weight:700;font-size:13px}
+.cap.ok{background:#e2f5f5;color:#00706f}.cap.full{background:#eef0f2;color:#60666d}.cap.over{background:#fde4e1;color:#a3271a}
+.empty{text-align:center;color:#6b7c8c;padding:40px 20px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;color:#36506a;font-weight:600}
+@media (max-width:900px){.cands{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.weights{grid-template-columns:1fr}}
+@media (max-width:640px){.header,.container{padding-left:16px;padding-right:16px}.assign{align-items:stretch;min-width:0;width:100%}.title{font-size:34px}table{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo" id="logo" aria-label="Story"></div>
+    <div class="divider"></div>
+    <div class="tag">L&amp;D only &middot; Match Planner</div>
+  </div>
+</div>
+<main class="container">
+  <h1 class="title">Mentoring &amp; Coaching Match Planner</h1>
+  <p class="subtitle">Load the responses from the Mentoring &amp; Coaching forms. The planner reads each person's match code from <em>Find Your Match</em>, scores every possible pairing and suggests an allocation that respects each mentor's or coach's capacity. Suggestions are a starting point. Always sense-check for line management, existing relationships and anything the form tells you.</p>
+
+  <section class="panel">
+    <h2>1. Load responses</h2>
+    <p>Upload the Excel export from MS Forms (or a CSV), or paste rows straight from Excel. You can load the supporter form and the request form together; the code tells the planner who's who. Columns headed <strong>Name</strong>, <strong>Email</strong> and <strong>Line manager</strong> are picked up automatically. The line manager column is used to stop people being matched with their own manager.</p>
+    <div class="row">
+      <label class="btn primary" for="file">Upload Excel / CSV<input type="file" id="file" accept=".xlsx,.xls,.csv" multiple hidden onchange="loadFiles(this.files)"/></label>
+      <button class="btn" onclick="loadDemo()">Load demo data</button>
+      <button class="btn" onclick="clearAll()">Clear everything</button>
+    </div>
+    <textarea id="paste" placeholder="Or paste here, one person per line, e.g.&#10;Jo Bloggs	jo.bloggs@story.co.uk	SMC1-M-...&#10;Sam Smith, SMC1-L-..."></textarea>
+    <div class="row"><button class="btn" onclick="loadPaste()">Add pasted rows</button></div>
+    <div class="privacy"><strong>Privacy:</strong> everything happens in this browser window. Nothing is uploaded or saved, and closing the tab clears the data. Export your allocation before you close.</div>
+    <div id="load-msg"></div>
+  </section>
+
+  <div id="results"></div>
+</main>
+
+<script>
+const STORY_LOGO_SVG = '<svg viewBox="0 0 2081 472" xmlns="http://www.w3.org/2000/svg"><path fill="#0061AD" d="M1392,473C928,473,464.6,473,1.1,473C1.1,315.7,1.1,158.5,1.1,1.1C694.7,1.1,1388.3,1.1,2082,1.1C2082,158.4,2082,315.7,2082,473C1852.1,473,1622.3,473,1392,473M1552.1,236.6C1558.3,230.1,1565.3,224.2,1570.5,217C1587.8,192.6,1593.4,164.9,1588.7,135.6C1585,112.6,1574.7,92.8,1555.2,78.8C1537.1,65.8,1516.2,62.3,1494.8,62.2C1430.1,61.9,1365.4,62.1,1300.8,62.1C1299,62.1,1297.2,62.1,1295.6,62.1C1271,177.8,1246.7,292.7,1222.2,408C1257.2,408,1291.8,408,1326.5,407.9C1327.6,407.9,1329.5,406,1329.8,404.8C1332.7,392,1335.3,379.2,1338,366.4C1344.7,334.3,1351.3,302.2,1358.2,270.2C1358.4,269,1360.2,267.3,1361.3,267.2C1374.9,266.4,1386.8,269.8,1394.3,282.2C1398.8,289.6,1403.4,297,1406.8,304.8C1420.9,337.5,1434.6,370.4,1448.2,403.2C1449.7,406.7,1451.2,408.1,1455.3,408.1C1489.5,407.9,1523.6,408,1557.8,408C1559.4,408,1561,408,1563.4,408C1555.7,389.3,1548.5,371.1,1540.8,353.3C1529.2,326.6,1516.8,300.3,1498.9,277.2C1495,272.1,1490.5,267.6,1486.1,262.5C1510,258.5,1532.4,252,1552.1,236.6M1064.4,404.9C1103,392.3,1134.2,369.2,1158.9,337.3C1180.5,309.4,1193.6,277.7,1200.1,243C1206.2,210.3,1206,177.8,1194.8,146.2C1179.7,103.6,1151,74.7,1106.8,62.9C1073.5,54.1,1039.6,54.6,1005.8,59.9C960.6,67,923.1,88.7,894.3,123.8C850.5,177.1,833.9,238.8,845.4,306.8C852.4,348.4,876,378.9,914.6,397.1C945.4,411.6,978.2,415,1011.7,413.6C1029.3,412.8,1046.7,410.6,1064.4,404.9M373.3,145.4C374.8,151.2,376.4,157.1,378,163.4C410.7,161.7,443.8,159.9,477.3,158.1C476.4,152.6,475.8,148,474.9,143.5C470.7,122.5,461.7,103.9,445.4,89.4C427.4,73.4,405.6,65.5,382.3,61.1C358.7,56.5,334.8,55.7,310.8,57C286.9,58.4,263.9,63.4,242.4,74.3C200.5,95.6,179.7,138,189.1,183.4C193.8,206.7,208.6,222.5,227.9,234.8C251,249.4,276.6,258.6,302.1,268C315.5,272.9,329.2,277.1,340.8,285.7C347.1,290.4,351.9,296.2,353,304.3C354.9,317.9,348,330.6,334.8,337.9C320.9,345.6,305.9,346.3,290.7,344.9C268.5,342.7,254.3,330.2,249.5,308.6C247.9,301.6,247.7,294.2,246.8,286.6C213.7,288.8,180.6,291,146.2,293.3C147.2,303.9,147.2,314.2,149.2,324.2C154.7,351.6,168.1,374.4,191.7,390.2C215.1,405.8,241.9,410.5,269.1,412.8C293.2,414.9,317.3,414.3,341.3,411.1C371,407.1,397.5,396.4,419.1,375.5C450.7,345,461.4,308.4,448.8,266C442,242.9,425.6,227,405.9,214.2C382.8,199.3,357.1,190,331.7,179.9C319.9,175.2,308.3,169.6,297.4,163.2C289.3,158.5,285.1,150.7,287.9,140.7C290.5,131.2,297.1,125.5,305.8,122C315.1,118.4,324.9,118.1,334.7,119C352.2,120.5,365.8,127.8,373.3,145.4M1696.5,408C1722.3,408,1748.2,408,1774,408.1C1777.1,408.1,1778.5,407.5,1779.2,403.9C1786.3,369.2,1793.5,334.6,1801.2,300C1803.4,289.6,1803.3,278.3,1811.6,270C1813.5,268.1,1815,265.8,1816.6,263.7C1864.7,201.5,1912.9,139.3,1961,77.1C1964.7,72.4,1968.3,67.5,1972.1,62.5C1971.2,62.2,1970.9,62.1,1970.6,62.1C1931.4,62.1,1892.3,62,1853.1,62.2C1851.4,62.2,1849.1,63.6,1848,65.1C1824.1,99.1,1800.4,133.1,1776.6,167.2C1771.4,174.7,1766.1,182.2,1760.5,190.1C1759.4,187.7,1758.6,186,1757.9,184.4C1741.6,144.9,1725.2,105.5,1709,66.1C1707.7,62.9,1706.1,62,1702.8,62C1668.3,62.1,1633.8,62.1,1599.3,62.1C1598.2,62.1,1597.1,62.2,1595.7,62.3C1596.2,63.6,1596.5,64.5,1596.9,65.4C1609.5,91.2,1622.2,117.1,1634.8,143C1655.6,185.5,1676.4,228.1,1697.1,270.7C1698.1,272.8,1699,275.5,1698.5,277.7C1690.9,313.8,1683.1,349.9,1675.3,386C1673.8,393.2,1672.4,400.4,1670.9,408C1679.5,408,1687.5,408,1696.5,408M829.5,62.1C810,62.1,790.5,62.1,771,62.1C693.4,62.1,615.7,62.1,538.1,62C534.5,62,532.6,62.3,531.8,66.7C529,81.8,525.5,96.8,522.3,111.9C519.9,123.5,517.5,135.1,515.1,147.1C551,147.1,586.4,147.1,622.3,147.1C612.9,191,603.4,234.3,594.1,277.7C584.8,321,575.6,364.3,566.3,408C601.3,408,636,408,670.6,407.8C671.8,407.8,673.6,405.7,673.9,404.3C681.3,371.2,688.6,338,695.7,304.9C704.9,262.7,713.9,220.4,723,178.2C725.2,167.8,727.6,157.5,730,147C767.4,147,804.5,147,842,147C848,118.6,853.9,90.5,859.9,62.1C849.8,62.1,840.2,62.1,829.5,62.1z"/><path fill="#FEFFFF" d="M1551.8,236.8C1532.4,252,1510,258.5,1486.1,262.5C1490.5,267.6,1495,272.1,1498.9,277.2C1516.8,300.3,1529.2,326.6,1540.8,353.3C1548.5,371.1,1555.7,389.3,1563.4,408C1561,408,1559.4,408,1557.8,408C1523.6,408,1489.5,407.9,1455.3,408.1C1451.2,408.1,1449.7,406.7,1448.2,403.2C1434.6,370.4,1420.9,337.5,1406.8,304.8C1403.4,297,1398.8,289.6,1394.3,282.2C1386.8,269.8,1374.9,266.4,1361.3,267.2C1360.2,267.3,1358.4,269,1358.2,270.2C1351.3,302.2,1344.7,334.3,1338,366.4C1335.3,379.2,1332.7,392,1329.8,404.8C1329.5,406,1327.6,407.9,1326.5,407.9C1291.8,408,1257.2,408,1222.2,408C1246.7,292.7,1271,177.8,1295.6,62.1C1297.2,62.1,1299,62.1,1300.8,62.1C1365.4,62.1,1430.1,61.9,1494.8,62.2C1516.2,62.3,1537.1,65.8,1555.2,78.8C1574.7,92.8,1585,112.6,1588.7,135.6C1593.4,164.9,1587.8,192.6,1570.5,217C1565.3,224.2,1558.3,230.1,1551.8,236.8M1402.5,202.9C1417.4,202.2,1432.4,202.2,1447.3,200.8C1461.3,199.5,1473.4,193.2,1481.9,181.6C1493.4,165.6,1493.9,136.1,1463,133.4C1438.2,131.3,1413.1,132,1387.9,131.5C1382.8,155.6,1377.8,179,1372.7,202.9C1382.6,202.9,1392.1,202.9,1402.5,202.9z"/><path fill="#FEFFFF" d="M1064,405C1046.7,410.6,1029.3,412.8,1011.7,413.6C978.2,415,945.4,411.6,914.6,397.1C876,378.9,852.4,348.4,845.4,306.8C833.9,238.8,850.5,177.1,894.3,123.8C923.1,88.7,960.6,67,1005.8,59.9C1039.6,54.6,1073.5,54.1,1106.8,62.9C1151,74.7,1179.7,103.6,1194.8,146.2C1206,177.8,1206.2,210.3,1200.1,243C1193.6,277.7,1180.5,309.4,1158.9,337.3C1134.2,369.2,1103,392.3,1064,405M978.7,330C1007.1,341.4,1038.2,334,1058.6,311.4C1075.1,293.2,1084.6,271.5,1091,248.3C1096.6,227.8,1101.2,207.1,1098.1,185.5C1093.8,155.3,1071,135.2,1040.5,135C1014,134.8,993.9,146.9,979.2,167.9C956.5,200.4,947.1,237.3,946.8,276.3C946.6,299.5,956.3,318.5,978.7,330z"/><path fill="#FEFEFF" d="M373.2,145C365.8,127.8,352.2,120.5,334.7,119C324.9,118.1,315.1,118.4,305.8,122C297.1,125.5,290.5,131.2,287.9,140.7C285.1,150.7,289.3,158.5,297.4,163.2C308.3,169.6,319.9,175.2,331.7,179.9C357.1,190,382.8,199.3,405.9,214.2C425.6,227,442,242.9,448.8,266C461.4,308.4,450.7,345,419.1,375.5C397.5,396.4,371,407.1,341.3,411.1C317.3,414.3,293.2,414.9,269.1,412.8C241.9,410.5,215.1,405.8,191.7,390.2C168.1,374.4,154.7,351.6,149.2,324.2C147.2,314.2,147.2,303.9,146.2,293.3C180.6,291,213.7,288.8,246.8,286.6C247.7,294.2,247.9,301.6,249.5,308.6C254.3,330.2,268.5,342.7,290.7,344.9C305.9,346.3,320.9,345.6,334.8,337.9C348,330.6,354.9,317.9,353,304.3C351.9,296.2,347.1,290.4,340.8,285.7C329.2,277.1,315.5,272.9,302.1,268C276.6,258.6,251,249.4,227.9,234.8C208.6,222.5,193.8,206.7,189.1,183.4C179.7,138,200.5,95.6,242.4,74.3C263.9,63.4,286.9,58.4,310.8,57C334.8,55.7,358.7,56.5,382.3,61.1C405.6,65.5,427.4,73.4,445.4,89.4C461.7,103.9,470.7,122.5,474.9,143.5C475.8,148,476.4,152.6,477.3,158.1C443.8,159.9,410.7,161.7,378,163.4C376.4,157.1,374.8,151.2,373.2,145z"/><path fill="#FEFEFF" d="M1696,408C1687.5,408,1679.5,408,1670.9,408C1672.4,400.4,1673.8,393.2,1675.3,386C1683.1,349.9,1690.9,313.8,1698.5,277.7C1699,275.5,1698.1,272.8,1697.1,270.7C1676.4,228.1,1655.6,185.5,1634.8,143C1622.2,117.1,1609.5,91.2,1596.9,65.4C1596.5,64.5,1596.2,63.6,1595.7,62.3C1597.1,62.2,1598.2,62.1,1599.3,62.1C1633.8,62.1,1668.3,62.1,1702.8,62C1706.1,62,1707.7,62.9,1709,66.1C1725.2,105.5,1741.6,144.9,1757.9,184.4C1758.6,186,1759.4,187.7,1760.5,190.1C1766.1,182.2,1771.4,174.7,1776.6,167.2C1800.4,133.1,1824.1,99.1,1848,65.1C1849.1,63.6,1851.4,62.2,1853.1,62.2C1892.3,62,1931.4,62.1,1970.6,62.1C1970.9,62.1,1971.2,62.2,1972.1,62.5C1968.3,67.5,1964.7,72.4,1961,77.1C1912.9,139.3,1864.7,201.5,1816.6,263.7C1815,265.8,1813.5,268.1,1811.6,270C1803.3,278.3,1803.4,289.6,1801.2,300C1793.5,334.6,1786.3,369.2,1779.2,403.9C1778.5,407.5,1777.1,408.1,1774,408.1C1748.2,408,1722.3,408,1696,408z"/><path fill="#FFF" d="M829.5,62.1C840.2,62.1,849.8,62.1,859.9,62.1C853.9,90.5,848,118.6,842,147C804.5,147,767.4,147,730,147C727.6,157.5,725.2,167.8,723,178.2C713.9,220.4,704.9,262.7,695.7,304.9C688.6,338,681.3,371.2,673.9,404.3C673.6,405.7,671.8,407.8,670.6,407.8C636,408,601.3,408,566.3,408C575.6,364.3,584.8,321,594.1,277.7C603.4,234.3,612.9,191,622.3,147.1C586.4,147.1,551,147.1,515.1,147.1C517.5,135.1,519.9,123.5,522.3,111.9C525.5,96.8,529,81.8,531.8,66.7C532.6,62.3,534.5,62,538.1,62C615.7,62.1,693.4,62.1,771,62.1C790.5,62.1,810,62.1,829.5,62.1z"/><path fill="#0161AD" d="M1402,202.9C1392.1,202.9,1382.6,202.9,1372.7,202.9C1377.8,179,1382.8,155.6,1387.9,131.5C1413.1,132,1438.2,131.3,1463,133.4C1493.9,136.1,1493.4,165.6,1481.9,181.6C1473.4,193.2,1461.3,199.5,1447.3,200.8C1432.4,202.2,1417.4,202.2,1402,202.9z"/><path fill="#0161AD" d="M978.4,329.8C956.3,318.5,946.6,299.5,946.8,276.3C947.1,237.3,956.5,200.4,979.2,167.9C993.9,146.9,1014,134.8,1040.5,135C1071,135.2,1093.8,155.3,1098.1,185.5C1101.2,207.1,1096.6,227.8,1091,248.3C1084.6,271.5,1075.1,293.2,1058.6,311.4C1038.2,334,1007.1,341.4,978.4,329.8z"/></svg>';
+// =====================================================================
+//  SHARED CONFIG — keep IDENTICAL in the Diagnostic and the Matching Tool.
+//  Lists are encoded by position, so only ever ADD items to the END of a
+//  list. Re-ordering or deleting items will break codes already issued.
+// =====================================================================
+const CODE_VERSION = 'SMC1';
+const ALPHABET = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // 34 chars, no I or O
+
+const AREAS = [
+  { name: 'Technical & engineering know-how', eg: 'Methods, temporary works, standards, design or technical problem-solving' },
+  { name: 'Leading people & site teams', eg: 'Running a gang or team, briefings, managing subcontractors, getting the best from people' },
+  { name: 'Health, safety & environmental leadership', eg: 'Setting the standard on site, safety conversations, near-miss learning' },
+  { name: 'Commercial, cost & project controls', eg: 'Valuations, cost reporting, change, contracts, keeping a job on budget' },
+  { name: 'Planning & programme', eg: 'Possessions, look-aheads, sequencing, keeping a job on programme' },
+  { name: 'Qualifications & professional development', eg: 'Apprenticeships, chartership or professional reviews, CPD' },
+  { name: 'Career direction & progression', eg: 'Working out next steps, moving roles or divisions, building a career at Story' },
+  { name: 'Confidence, communication & influencing', eg: 'Speaking up, presenting, handling difficult conversations' },
+  { name: 'Client & stakeholder relationships', eg: 'Client meetings, building trust, managing expectations' },
+  { name: 'Stepping into a new role', eg: 'First-time manager or supervisor, a bigger remit, a new team' },
+  { name: 'Wellbeing, resilience & balance', eg: 'Managing pressure, workload, time away from home, staying well' }
+];
+
+const LEVELS = [
+  'Early career (apprentice, trainee, graduate)',
+  'Experienced (operative, craft, technical, admin)',
+  'Supervisory (supervisor, foreman, team leader)',
+  'Professional or manager (engineer, PM, manager)',
+  'Senior leader (senior manager, head of, director)'
+];
+
+const BUSINESS = ['Story Eastern', 'Story North West', 'Story Scotland', 'Story South and Central', 'Story Construction', 'Group Services'];
+
+const SETTINGS = ['Mostly on site', 'Mostly office-based', 'A mix of both'];
+
+const REGIONS = [
+  'Scotland', 'North West & Cumbria', 'North East', 'Yorkshire & the Humber',
+  'Midlands', 'Wales', 'South & London', 'I travel widely / multiple regions'
+];
+const REGION_ANY = 7; // index of the "travel widely" option
+
+const FREQUENCIES = ['Every couple of weeks', 'About once a month', 'Every 6 to 8 weeks'];
+
+const FORMATS = ['In person', 'On Teams']; // bitmask: 1 = in person, 2 = Teams
+
+const OFFERS = ['', 'Mentoring', 'Coaching', 'Mentoring and coaching'];      // bitmask 1|2
+const ROUTES = ['', 'Mentoring', 'Coaching', 'Open to either'];             // 1, 2, 3
+const AREA_PREFS = ['No preference', 'Someone from my part of the business', 'Someone from a different part of the business'];
+
+// Style dimensions. Each is encoded 0-8 (4 = balanced).
+const DIMS = [
+  { key: 'D', low: 'Guides', high: 'Draws out',
+    lowText: 'shares experience, gives advice and practical steps',
+    highText: 'asks questions and helps the other person find their own answers' },
+  { key: 'C', low: 'Supports', high: 'Challenges',
+    lowText: 'leads with encouragement and reassurance',
+    highText: 'is direct, holds people to account and stretches them' },
+  { key: 'S', low: 'Flexible', high: 'Structured',
+    lowText: 'lets conversations go where they need to',
+    highText: 'works to clear goals, plans and follow-ups' }
+];
+
+// ---------- Code encode / decode ----------
+// Layout (22 data chars + 2 checksum):
+//  0 role-specific A (supporter: offer 1-3 | seeker: route 1-3)
+//  1 role-specific B (supporter: capacity 1-3 | seeker: area pref 0-2)
+//  2-4 style D,C,S (0-8)
+//  5 level, 6 business, 7 setting, 8 region, 9 format mask, 10 frequency
+//  11-21 areas (supporter: experience 0-3 | seeker: priority rank 0-3, 1 = top)
+function checksum(vals) {
+  let s = 7;
+  vals.forEach((v, i) => { s = (s * 31 + (v + 1) * (i + 3)) % (34 * 34); });
+  return [Math.floor(s / 34), s % 34];
+}
+function encodeProfile(p) {
+  const vals = [p.a, p.b, ...p.style, p.level, p.biz, p.setting, p.region, p.fmt, p.freq, ...p.areas];
+  const ck = checksum(vals);
+  const body = vals.concat(ck).map(v => ALPHABET[v]).join('');
+  return CODE_VERSION + '-' + p.role + '-' + body.match(/.{1,4}/g).join('-');
+}
+function decodeProfile(raw) {
+  const m = String(raw).toUpperCase().match(/SMC1[\s-]*([ML])[\s-]*((?:[0-9A-HJ-NP-Z][\s-]*){24})/);
+  if (!m) return null;
+  const chars = m[2].replace(/[\s-]/g, '').split('');
+  const vals = chars.map(c => ALPHABET.indexOf(c));
+  if (vals.some(v => v < 0)) return null;
+  const data = vals.slice(0, 22), ck = checksum(data);
+  if (ck[0] !== vals[22] || ck[1] !== vals[23]) return { error: 'checksum' };
+  const p = {
+    role: m[1], a: data[0], b: data[1], style: data.slice(2, 5),
+    level: data[5], biz: data[6], setting: data[7], region: data[8], fmt: data[9], freq: data[10],
+    areas: data.slice(11, 22)
+  };
+  const ok = p.a >= 1 && p.a <= 3 && p.style.every(v => v <= 8) && p.level < LEVELS.length &&
+    p.biz < BUSINESS.length && p.setting < SETTINGS.length && p.region < REGIONS.length &&
+    p.fmt >= 1 && p.fmt <= 3 && p.freq < FREQUENCIES.length && p.areas.every(v => v <= 3);
+  if (!ok) return { error: 'range' };
+  p.code = encodeProfile(p);
+  return p;
+}
+
+
+// =====================================================================
+//  STATE
+// =====================================================================
+let people = [];          // {id, name, email, p}
+let assignments = {};     // seekerId -> supporterId | '' (none)
+let manual = {};          // seekerId -> true when L&D has picked by hand
+let weights = { G: 45, S: 30, P: 25 };
+let showAll = false;
+let lmMode = 'block';     // 'block' | 'flag' for line-manager pairings
+let lmColumnSeen = false;
+let tab = 'seekers';
+let nextId = 1;
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// =====================================================================
+//  LOADING
+// =====================================================================
+function ingestRows(rows, source) {
+  let added = 0, bad = [];
+  if (!rows.length) return { added, bad };
+  let nameCol = -1, emailCol = -1, lmCol = -1, start = 0;
+  const first = rows[0].map(c => String(c == null ? '' : c));
+  if (!first.some(c => decodeProfile(c))) {
+    first.forEach((c, i) => {
+      const t = c.trim().toLowerCase();
+      if (nameCol < 0 && (t === 'name' || t === 'full name' || t === 'your name')) nameCol = i;
+      const isLm = /line ?manager|manager'?s name|reports? (in)?to/.test(t);
+      if (lmCol < 0 && isLm) lmCol = i;
+      if (emailCol < 0 && /e-?mail/.test(t) && !isLm) emailCol = i;
+    });
+    if (nameCol < 0) first.forEach((c, i) => { if (nameCol < 0 && i !== lmCol && /name/i.test(c) && !/user ?name/i.test(c)) nameCol = i; });
+    if (lmCol >= 0) lmColumnSeen = true;
+    start = 1;
+  }
+  for (let r = start; r < rows.length; r++) {
+    const row = rows[r].map(c => String(c == null ? '' : c).trim());
+    if (!row.some(c => c)) continue;
+    let p = null, codeCell = -1;
+    row.forEach((c, i) => { if (!p) { const d = decodeProfile(c); if (d) { p = d; codeCell = i; } } });
+    const email = emailCol >= 0 ? row[emailCol] : (row.find(c => /\S+@\S+\.\S+/.test(c)) || '');
+    let name = nameCol >= 0 ? row[nameCol] : '';
+    const lineManager = lmCol >= 0 ? (row[lmCol] || '') : '';
+    if (!name) name = row.find((c, i) => i !== codeCell && i !== lmCol && c && !/@/.test(c) && !/^[\d\s\/:.,-]+$/.test(c) && !/SMC1/i.test(c) && /[a-z]/i.test(c) && c.length < 60) || '';
+    if (!p) { if (row.some(c => /SMC1/i.test(c))) bad.push((name || 'Row ' + (r + 1)) + ': code not recognised'); continue; }
+    if (p.error) { bad.push((name || 'Row ' + (r + 1)) + ': code looks mistyped (' + p.error + ')'); continue; }
+    if (!name) name = (p.role === 'M' ? 'Supporter ' : 'Requester ') + nextId;
+    const dup = people.find(x => x.p.code === p.code && x.name.toLowerCase() === name.toLowerCase());
+    if (dup) continue;
+    people.push({ id: 'p' + (nextId++), name, email, lineManager, p });
+    added++;
+  }
+  return { added, bad };
+}
+
+function report(results) {
+  const added = results.reduce((a, r) => a + r.added, 0);
+  const bad = results.flatMap(r => r.bad);
+  document.getElementById('load-msg').innerHTML =
+    '<div class="privacy" style="background:#e2f5f5;color:#00504f">Added ' + added + ' ' + (added === 1 ? 'person' : 'people') + '. ' + people.length + ' loaded in total.</div>' +
+    (bad.length ? '<div class="warn"><strong>' + bad.length + ' row(s) skipped:</strong><br>' + bad.map(esc).join('<br>') + '</div>' : '');
+  autoAssign(true);
+  renderResults();
+}
+
+function loadPaste() {
+  const txt = document.getElementById('paste').value;
+  const rows = txt.split(/\r?\n/).filter(l => l.trim()).map(l => l.includes('\t') ? l.split('\t') : l.split(','));
+  report([ingestRows(rows, 'paste')]);
+  document.getElementById('paste').value = '';
+}
+
+function loadFiles(files) {
+  const jobs = [...files].map(f => new Promise(res => {
+    const reader = new FileReader();
+    const isCsv = /\.csv$/i.test(f.name);
+    reader.onload = e => {
+      try {
+        let rows;
+        if (isCsv && typeof XLSX === 'undefined') rows = parseCsv(e.target.result);
+        else {
+          if (typeof XLSX === 'undefined') throw new Error('Excel reader unavailable offline. Save the export as CSV and try again.');
+          const wb = isCsv ? XLSX.read(e.target.result, { type: 'string' }) : XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          rows = [];
+          wb.SheetNames.forEach(n => { rows = rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' })); });
+        }
+        res(ingestRows(rows, f.name));
+      } catch (err) { res({ added: 0, bad: [f.name + ': ' + err.message] }); }
+    };
+    isCsv ? reader.readAsText(f) : reader.readAsArrayBuffer(f);
+  }));
+  Promise.all(jobs).then(report);
+  document.getElementById('file').value = '';
+}
+
+function parseCsv(t) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"' && t[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+function clearAll() { lmColumnSeen = false; people = []; assignments = {}; manual = {}; document.getElementById('load-msg').innerHTML = ''; renderResults(); }
+
+// =====================================================================
+//  SCORING
+// =====================================================================
+const RANK_W = { 1: 3, 2: 2, 3: 1 };
+// ---------- Line-manager check ----------
+// Matches "Jo Bloggs", "jo bloggs", "Bloggs, Jo", "Jo A. Bloggs" or an email address.
+function nameTokens(s) {
+  s = String(s || '').toLowerCase().replace(/\(.*?\)/g, ' ').trim();
+  if (/^[^,]+,[^,]+$/.test(s)) s = s.split(',').reverse().join(' '); // "Surname, First"
+  return s.replace(/[^a-z\s'-]/g, ' ').split(/\s+/).filter(Boolean);
+}
+function refersTo(text, person) {
+  const raw = String(text || '').trim();
+  if (!raw) return false;
+  const em = raw.match(/[^\s<>(),;]+@[^\s<>(),;]+/);
+  if (em) return !!person.email && em[0].toLowerCase() === person.email.toLowerCase();
+  const L = nameTokens(raw), P = nameTokens(person.name);
+  if (L.length < 2 || P.length < 2) return false;
+  const inP = w => P.includes(w), inL = w => L.includes(w);
+  return inP(L[0]) && inP(L[L.length - 1]) && inL(P[0]) && inL(P[P.length - 1]);
+}
+function lineManagerLink(seeker, sup) {
+  if (refersTo(seeker.lineManager, sup)) return sup.name + ' is ' + seeker.name + '\'s line manager';
+  if (refersTo(sup.lineManager, seeker)) return seeker.name + ' is ' + sup.name + '\'s line manager';
+  return '';
+}
+
+function samePerson(a, b) {
+  if (a.email && b.email && a.email.toLowerCase() === b.email.toLowerCase()) return true;
+  return a.name.trim().toLowerCase() === b.name.trim().toLowerCase();
+}
+
+function scorePair(seeker, sup) {
+  const L = seeker.p, M = sup.p, reasons = [], flags = [];
+  // --- Route gate ---
+  const route = L.a; // 1 mentoring, 2 coaching, 3 either
+  let routeOk = route === 3 || (M.a & route) > 0;
+  if (!routeOk) flags.push('Doesn\'t offer ' + (route === 1 ? 'mentoring' : 'coaching'));
+  if (samePerson(seeker, sup)) return null;
+  const lm = lineManagerLink(seeker, sup);
+
+  // --- Goals vs strengths ---
+  let num = 0, den = 0, best = null;
+  L.areas.forEach((rank, i) => {
+    if (!rank) return;
+    const w = RANK_W[rank], e = M.areas[i];
+    num += w * e / 3; den += w;
+    if (e >= 2 && (!best || rank < best.rank)) best = { rank, i, e };
+  });
+  const G = den ? num / den : .5;
+  if (best) reasons.push((best.e === 3 ? 'Specialist in ' : 'Strong experience in ') + AREAS[best.i].name.toLowerCase() + ' (priority ' + best.rank + ')');
+  const topIdx = L.areas.indexOf(1);
+  if (topIdx >= 0 && M.areas[topIdx] === 0 && route !== 2) flags.push('No experience in their top priority');
+
+  // --- Style fit ---
+  const diffs = L.style.map((v, i) => Math.abs(v - M.style[i]));
+  let St = diffs.reduce((a, d) => a + (1 - d / 8), 0) / 3;
+  // A seeker routed to coaching benefits from a supporter who draws out
+  if (route === 2 && M.style[0] <= 2) { St *= .8; flags.push('Leans towards advice-giving for a coaching match'); }
+  const close = DIMS.filter((d, i) => diffs[i] <= 1).map(d => {
+    const v = L.style[DIMS.indexOf(d)]; return v <= 2 ? d.low.toLowerCase() : v >= 6 ? d.high.toLowerCase() : null;
+  }).filter(Boolean);
+  if (close.length) reasons.push('Style fit: both lean ' + close.join(', '));
+  const far = DIMS.filter((d, i) => diffs[i] >= 5).map(d => d.low + '/' + d.high);
+  if (far.length) flags.push('Style gap on ' + far.join(', '));
+
+  // --- Practicalities ---
+  const fmtOk = (L.fmt & M.fmt) > 0;
+  const teamsBoth = (L.fmt & 2) && (M.fmt & 2);
+  let region;
+  if (L.region === M.region) { region = 1; if (L.region !== REGION_ANY && (L.fmt & 1)) reasons.push('Both based in ' + REGIONS[L.region]); }
+  else if (L.region === REGION_ANY || M.region === REGION_ANY) region = .8;
+  else if (teamsBoth) region = .65;
+  else { region = .1; if (L.fmt & 1) flags.push('Different regions, in-person only'); }
+  if (!fmtOk) flags.push('No shared way to meet');
+  const fd = M.freq - L.freq; // higher index = less often
+  const freq = fd <= 0 ? 1 : fd === 1 ? .5 : .2;
+  if (fd >= 1) flags.push('Can meet less often than requested');
+  let biz = 1;
+  if (L.b === 1) { biz = L.biz === M.biz ? 1 : .3; if (L.biz === M.biz) reasons.push('Same part of the business, as requested'); }
+  if (L.b === 2) { biz = L.biz !== M.biz ? 1 : .3; if (L.biz !== M.biz) reasons.push('Different part of the business, as requested'); }
+  const setting = L.setting === M.setting ? 1 : (L.setting === 2 || M.setting === 2) ? .8 : .6;
+  if (L.setting === M.setting && L.setting === 0) reasons.push('Both site-based');
+  const P = (fmtOk ? .3 : 0) + .25 * region + .2 * freq + .15 * biz + .1 * setting;
+
+  // --- Seniority (mentoring relies on having walked the path) ---
+  let mult = 1;
+  if (route !== 2 && M.level < L.level) { mult = .85; flags.push('Less senior than the mentee'); }
+
+  const W = weights.G + weights.S + weights.P || 1;
+  let total = (weights.G * G + weights.S * St + weights.P * P) / W * mult;
+  if (!fmtOk) total *= .7;
+  const blocked = !!lm && lmMode === 'block';
+  return { sup, total: Math.round(total * 100), G, St, P, routeOk, lm, blocked, eligible: routeOk && !blocked, reasons, flags };
+}
+
+function seekers() { return people.filter(x => x.p.role === 'L'); }
+function supporters() { return people.filter(x => x.p.role === 'M'); }
+function ranked(seeker) {
+  return supporters().map(s => scorePair(seeker, s)).filter(Boolean)
+    .filter(r => showAll || r.eligible).sort((a, b) => b.total - a.total);
+}
+
+// Greedy best-first allocation that respects capacity. Manual picks are kept.
+function autoAssign(keepManual) {
+  const load = {};
+  supporters().forEach(s => load[s.id] = 0);
+  const next = {};
+  if (keepManual) Object.keys(manual).forEach(k => { const sk = people.find(p => p.id === k), sp = people.find(p => p.id === assignments[k]); if (sk && sp && lmMode === 'block' && lineManagerLink(sk, sp)) { delete manual[k]; return; } if (manual[k] && sk) { next[k] = assignments[k]; if (assignments[k]) load[assignments[k]] = (load[assignments[k]] || 0) + 1; } });
+  else manual = {};
+  const pairs = [];
+  seekers().forEach(l => { if (next[l.id] !== undefined) return; supporters().forEach(s => { const r = scorePair(l, s); if (r && r.eligible) pairs.push({ l: l.id, s: s.id, t: r.total }); }); });
+  pairs.sort((a, b) => b.t - a.t);
+  pairs.forEach(x => {
+    if (next[x.l] !== undefined) return;
+    const cap = people.find(p => p.id === x.s).p.b;
+    if (load[x.s] < cap) { next[x.l] = x.s; load[x.s]++; }
+  });
+  seekers().forEach(l => { if (next[l.id] === undefined) next[l.id] = ''; });
+  assignments = next;
+}
+function loadOf(id) { return Object.values(assignments).filter(v => v === id).length; }
+
+// =====================================================================
+//  RENDER
+// =====================================================================
+function bar(label, v, color) {
+  return '<div class="bar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' + Math.round(v * 100) + '%;background:' + color + '"></div></div><span>' + Math.round(v * 100) + '</span></div>';
+}
+function setWeight(k, v) { weights[k] = +v; document.getElementById('w' + k).textContent = v; autoAssign(true); renderList(); }
+function setShowAll(v) { showAll = v; renderList(); }
+function setLmMode(v) { lmMode = v; autoAssign(true); renderResults(); }
+function lmConflicts() { const out = []; seekers().forEach(l => supporters().forEach(s => { if (!samePerson(l, s)) { const why = lineManagerLink(l, s); if (why) out.push({ l, s, why, allocated: assignments[l.id] === s.id }); } })); return out; }
+function pick(seekerId, supId) { assignments[seekerId] = supId; manual[seekerId] = true; renderResults(); }
+function setTab(t) { tab = t; renderResults(); }
+function reallocate() { autoAssign(false); renderResults(); }
+
+function renderResults() {
+  const el = document.getElementById('results');
+  if (!people.length) { el.innerHTML = '<div class="panel empty">Load some responses to see suggested matches.</div>'; return; }
+  const L = seekers(), M = supporters();
+  const matched = L.filter(l => assignments[l.id]).length;
+  const cap = M.reduce((a, s) => a + s.p.b, 0);
+  let h = '<div class="stats">' +
+    '<div class="stat"><div class="n">' + L.length + '</div><div class="l">People requesting support</div></div>' +
+    '<div class="stat"><div class="n">' + M.length + '</div><div class="l">Mentors &amp; coaches</div></div>' +
+    '<div class="stat"><div class="n">' + matched + '/' + L.length + '</div><div class="l">Matched</div></div>' +
+    '<div class="stat"><div class="n">' + Math.max(0, cap - matched) + '</div><div class="l">Spare places</div></div></div>';
+  h += '<section class="panel"><h2>2. Tune the matching</h2><p>Adjust how much each factor counts. The allocation updates as you go. Anything you\'ve picked by hand stays put.</p><div class="weights">' +
+    [['G', 'Goals vs strengths', 'Their priority areas against the supporter\'s experience'], ['S', 'Style fit', 'Guide or draw out, support or challenge, flexible or structured'], ['P', 'Practicalities', 'Meeting format, region, frequency, business area']]
+      .map(([k, l, s]) => '<div><label for="r' + k + '">' + l + ' <span id="w' + k + '">' + weights[k] + '</span></label><small>' + s + '</small><input id="r' + k + '" type="range" min="0" max="100" step="5" value="' + weights[k] + '" oninput="setWeight(\'' + k + '\',this.value)"/></div>').join('') +
+    '</div><div class="row"><label class="toggle"><input type="checkbox" ' + (showAll ? 'checked' : '') + ' onchange="setShowAll(this.checked)"/> Show supporters who don\'t offer the requested type</label>' +
+    '<button class="btn" onclick="reallocate()">Re-run allocation (clears hand picks)</button><button class="btn primary" onclick="exportCsv()">Export allocation (CSV)</button></div>' + lmPanel() + '</section>';
+  h += '<div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="' + (tab === 'seekers') + '" onclick="setTab(\'seekers\')">Matches by person</button><button class="tab" role="tab" aria-selected="' + (tab === 'supporters') + '" onclick="setTab(\'supporters\')">Mentor &amp; coach capacity</button></div><div id="list"></div>';
+  el.innerHTML = h;
+  renderList();
+}
+
+function lmPanel() {
+  const c = lmConflicts();
+  let h = '<div class="lm-panel"><label for="lm-mode">Line-manager pairings:</label><select id="lm-mode" onchange="setLmMode(this.value)">' +
+    '<option value="block"' + (lmMode === 'block' ? ' selected' : '') + '>Block them (never suggested or auto-allocated)</option>' +
+    '<option value="flag"' + (lmMode === 'flag' ? ' selected' : '') + '>Flag them (allowed, with a warning)</option></select></div>';
+  if (!lmColumnSeen) h += '<div class="warn"><strong>No line manager column found.</strong> Add a question headed "Line manager" to your forms so the planner can check for this. Until then, check reporting lines by hand.</div>';
+  else if (c.length) h += '<div class="alert"><strong>' + c.length + ' line-manager pairing' + (c.length === 1 ? '' : 's') + ' found' + (lmMode === 'block' ? ' and blocked' : '') + ':</strong><br>' +
+    c.map(x => esc(x.why) + (x.allocated ? ' &middot; <strong>currently allocated</strong>' : '')).join('<br>') + '</div>';
+  else h += '<div class="privacy" style="background:#e2f5f5;color:#00504f">Line manager check: no requester is paired with their own line manager. Names are matched loosely (case, middle names, "Surname, First"), so nicknames or misspellings may slip through.</div>';
+  return h;
+}
+
+function renderList() {
+  const el = document.getElementById('list'); if (!el) return;
+  if (tab === 'supporters') { el.innerHTML = renderSupporters(); return; }
+  const L = seekers();
+  if (!L.length) { el.innerHTML = '<div class="panel empty">No requests loaded yet. Codes starting <strong>SMC1-L</strong> are requests.</div>'; return; }
+  // Unmatched first, then by name
+  const sorted = L.slice().sort((a, b) => (!!assignments[a.id] - !!assignments[b.id]) || a.name.localeCompare(b.name));
+  el.innerHTML = sorted.map(l => {
+    const r = ranked(l), cur = assignments[l.id] || '';
+    const pri = l.p.areas.map((v, i) => ({ v, i })).filter(x => x.v).sort((a, b) => a.v - b.v);
+    const top = r.slice(0, 3);
+    const chosen = cur && !top.find(x => x.sup.id === cur) ? r.find(x => x.sup.id === cur) : null;
+    const cards = (chosen ? top.slice(0, 2).concat(chosen) : top);
+    return '<div class="seeker"><div class="seeker-head"><div><div class="who">' + esc(l.name) + '</div><div class="meta">' + esc(l.email) + (l.email ? ' &middot; ' : '') + esc(LEVELS[l.p.level].split(' (')[0]) + ' &middot; ' + BUSINESS[l.p.biz] + ' &middot; ' + REGIONS[l.p.region] + '</div>' +
+      '<div class="chips"><span class="chip amber">Wants: ' + ROUTES[l.p.a].toLowerCase() + '</span>' + pri.map(x => '<span class="chip">' + x.v + '. ' + esc(AREAS[x.i].name) + '</span>').join('') +
+      '<span class="chip grey">' + DIMS.map((d, i) => l.p.style[i] <= 2 ? d.low : l.p.style[i] >= 6 ? d.high : null).filter(Boolean).concat([]).join(' &middot; ') + (DIMS.some((d, i) => l.p.style[i] <= 2 || l.p.style[i] >= 6) ? '' : 'Balanced style') + '</span></div></div>' +
+      '<div class="assign"><label class="meta" for="sel-' + l.id + '">Allocated to' + (manual[l.id] ? ' (hand-picked)' : '') + '</label><select id="sel-' + l.id + '" onchange="pick(\'' + l.id + '\',this.value)"><option value="">Not matched yet</option>' +
+      r.map(x => { const ld = loadOf(x.sup.id), full = ld >= x.sup.p.b && cur !== x.sup.id; return '<option value="' + x.sup.id + '"' + (cur === x.sup.id ? ' selected' : '') + '>' + esc(x.sup.name) + ' (' + x.total + ')' + (full ? ' · full' : '') + (x.routeOk ? '' : ' · wrong type') + (x.lm ? (x.blocked ? ' · line manager, blocked' : ' · LINE MANAGER') : '') + '</option>'; }).join('') + '</select></div></div>' +
+      (cards.length ? '<div class="cands">' + cards.map(x => {
+        const ld = loadOf(x.sup.id), full = ld >= x.sup.p.b && cur !== x.sup.id;
+        return '<div class="cand' + (x.lm ? ' lm' : '') + (cur === x.sup.id ? ' chosen' : '') + (full ? ' full' : '') + '"><div class="cand-top"><span class="cand-name">' + esc(x.sup.name) + '</span><span class="score">' + x.total + '</span></div>' +
+          '<div class="meta">' + OFFERS[x.sup.p.a] + ' &middot; ' + ld + '/' + x.sup.p.b + ' places used</div>' +
+          '<div class="bars">' + bar('Goals', x.G, '#0061AD') + bar('Style', x.St, '#009FA0') + bar('Practical', x.P, '#e8a00e') + '</div>' +
+          '<ul class="reasons">' + (x.lm ? '<li class="lm">&#9888; ' + esc(x.lm) + (x.blocked ? ' (blocked)' : '') + '</li>' : '') + x.reasons.map(t => '<li>' + esc(t) + '</li>').join('') + x.flags.map(t => '<li class="flag">' + esc(t) + '</li>').join('') + '</ul>' +
+          (cur === x.sup.id || x.blocked ? '' : '<div class="row" style="margin-top:10px"><button class="btn small" onclick="pick(\'' + l.id + '\',\'' + x.sup.id + '\')">' + (full ? 'Allocate anyway' : 'Allocate') + '</button></div>') + '</div>';
+      }).join('') + '</div>' : '<div class="warn">No suitable ' + (l.p.a === 2 ? 'coaches' : l.p.a === 1 ? 'mentors' : 'supporters') + ' loaded yet.</div>') + '</div>';
+  }).join('');
+}
+
+function renderSupporters() {
+  const M = supporters();
+  if (!M.length) return '<div class="panel empty">No mentors or coaches loaded yet. Codes starting <strong>SMC1-M</strong> are supporters.</div>';
+  return '<div class="panel" style="overflow-x:auto"><table><thead><tr><th>Name</th><th>Offers</th><th>Strengths</th><th>Places</th><th>Allocated</th></tr></thead><tbody>' +
+    M.slice().sort((a, b) => a.name.localeCompare(b.name)).map(s => {
+      const ld = loadOf(s.id), cls = ld > s.p.b ? 'over' : ld === s.p.b ? 'full' : 'ok';
+      const who = seekers().filter(l => assignments[l.id] === s.id).map(l => esc(l.name)).join(', ') || '<span class="meta">None yet</span>';
+      const str = s.p.areas.map((v, i) => ({ v, i })).filter(x => x.v >= 2).sort((a, b) => b.v - a.v).map(x => '<span class="chip' + (x.v === 3 ? '' : ' teal') + '">' + esc(AREAS[x.i].name) + '</span>').join('');
+      return '<tr><td><strong>' + esc(s.name) + '</strong><div class="meta">' + esc(BUSINESS[s.p.biz]) + ' &middot; ' + esc(REGIONS[s.p.region]) + '</div></td><td>' + OFFERS[s.p.a] + '</td><td><div class="chips" style="margin:0">' + (str || '<span class="meta">None marked</span>') + '</div></td><td><span class="cap ' + cls + '">' + ld + '/' + s.p.b + '</span></td><td>' + who + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+function exportCsv() {
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['Requester', 'Requester email', 'Wants', 'Top priority', 'Allocated to', 'Supporter email', 'Offers', 'Score', 'Goals', 'Style', 'Practical', 'Hand-picked', 'Line manager check', 'Why', 'Watch-outs']];
+  seekers().forEach(l => {
+    const sid = assignments[l.id], s = people.find(p => p.id === sid);
+    const r = s ? scorePair(l, s) : null;
+    const topI = l.p.areas.indexOf(1);
+    rows.push([l.name, l.email, ROUTES[l.p.a], topI >= 0 ? AREAS[topI].name : '', s ? s.name : 'Not matched', s ? s.email : '', s ? OFFERS[s.p.a] : '',
+      r ? r.total : '', r ? Math.round(r.G * 100) : '', r ? Math.round(r.St * 100) : '', r ? Math.round(r.P * 100) : '', manual[l.id] ? 'Yes' : 'No', r ? (r.lm ? 'WARNING: ' + r.lm : (lmColumnSeen ? 'OK' : 'Not checked')) : '',
+      r ? r.reasons.join('; ') : '', r ? r.flags.join('; ') : '']);
+  });
+  const blob = new Blob(['﻿' + rows.map(r => r.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'mentoring-coaching-matches-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// =====================================================================
+//  DEMO DATA (fictional people, generated codes)
+// =====================================================================
+function loadDemo() {
+  const mk = (role, a, b, style, level, biz, setting, region, fmt, freq, areas) => encodeProfile({ role, a, b, style, level, biz, setting, region, fmt, freq, areas });
+  const demo = [
+    ['Demo Mentor A', mk('M', 1, 2, [1, 5, 6], 4, 0, 0, 1, 3, 1, [3, 3, 3, 1, 3, 2, 2, 1, 2, 2, 1])],
+    ['Demo Coach B', mk('M', 2, 2, [7, 4, 3], 3, 3, 1, 1, 2, 0, [0, 1, 1, 1, 0, 2, 3, 3, 2, 2, 3])],
+    ['Demo Mentor C', mk('M', 3, 1, [4, 6, 7], 4, 1, 2, 2, 3, 1, [2, 2, 2, 3, 3, 3, 2, 2, 3, 3, 1])],
+    ['Demo Mentor D', mk('M', 1, 3, [2, 3, 5], 3, 2, 0, 0, 1, 2, [3, 2, 3, 0, 2, 1, 1, 1, 0, 1, 2])],
+    ['Demo Requester 1', mk('L', 1, 1, [2, 5, 6], 1, 0, 0, 1, 1, 1, [1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0]), 'Mentor A, Demo'],
+    ['Demo Requester 2', mk('L', 2, 0, [7, 4, 2], 3, 3, 1, 3, 2, 0, [0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 3])],
+    ['Demo Requester 3', mk('L', 3, 2, [4, 6, 6], 2, 0, 2, 2, 3, 1, [0, 0, 0, 1, 2, 0, 0, 0, 3, 0, 0])],
+    ['Demo Requester 4', mk('L', 1, 0, [3, 3, 4], 0, 2, 0, 0, 1, 1, [2, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0])],
+    ['Demo Requester 5', mk('L', 2, 0, [6, 2, 3], 2, 1, 1, 4, 2, 0, [0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0])]
+  ];
+  report([ingestRows([['Name', 'Match code', 'Line manager']].concat(demo), 'demo')]);
+}
+
+document.getElementById('logo').innerHTML = STORY_LOGO_SVG;
+renderResults();
+</script>
+</body>
+</html>
